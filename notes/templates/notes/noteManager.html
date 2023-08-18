@@ -1,0 +1,82 @@
+{% extends 'notes/base.html' %}
+{% block title %}Notes List{% endblock %}
+    
+{% block content %}
+    
+        <div class="row">
+            <div class="col-md-5">
+                <div class="n-form">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="n-title">
+                            <h2>Create Note</h2>
+                            <p>Here you can create notes</p>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" placeholder="Title" class="form-control" id="{{ form.title.id_for_label  }}" name="{{ form.title.html_name }}">
+                        </div>
+                        <div class="form-group">
+                          <textarea class="form-control" rows="4" placeholder="Content" id="{{ form.content.id_for_label }}" name="{{ form.content.html_name }}"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-outline-primary">Create Note</button>
+                      </form>
+                </div>
+            </div>
+            <div class="col-md-7">
+                <div class="n-title">
+                    <h2>Notes List</h2>
+                    <p>Here are all notes</p>
+                </div>
+                {% for note in notes %}
+                    <div class="card" style="margin-bottom: 10px;">
+                        <h5 class="card-header alert alert-primary" data-note-id="{{ note.id }}" data-field="title">{{ note.title }}</h5>
+                        <p class="card-body" data-note-id="{{ note.id }}" data-field="content">{{ note.content }}</p>
+                    </div>
+            {% endfor %}
+            </div>
+        </div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        $('.card-header, .card-body').on('click', function () {
+            let noteId = $(this).data('id');
+            let field = $(this).data('content');
+            let originalText = $(this).text();
+
+            $(this).html(`<input type="text" class="form-control" id="edit-${field}-note-${noteId}" value="${originalText}" />`);
+            $(`#edit-${field}-note-${noteId}`).focus();
+
+            $(`#edit-${field}-note-${noteId}`).on('blur', function () {
+                let editedText = $(this).val();
+                $(this).parent().html(editedText);
+
+                // AJAX request to update the note content in the database
+                $.ajax({
+                    type: 'POST',
+                    url: '/edit_note/',
+                    data: {
+                        'note_id': noteId,
+                        'field': field,
+                        'text': editedText,
+                        'csrfmiddlewaretoken': '{{ csrf_token }}',
+                    },
+                    success: function (response) {
+                        // Handle success response if needed
+                    },
+                    error: function (error) {
+                        // Handle error response if needed
+                    }
+                });
+            });
+
+            $(`#edit-${field}-note-${noteId}`).on('keypress', function (event) {
+                if (event.keyCode === 13) {
+                    $(this).trigger('blur');
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
